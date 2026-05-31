@@ -46,11 +46,16 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
         flush=True,
     )
 
-    candidates = filter_items(text_items, cfg.keywords, store)
+    text_cands = filter_items(text_items, cfg.keywords, store)
     videos = dedup_unseen(video_items, store)
     videos.sort(key=lambda it: it.published_at, reverse=True)
     videos = videos[: int(cfg.raw.get("videos_per_day", 6))]
-    print(f"[radar] candidates={len(candidates)} videos={len(videos)}", flush=True)
+    draft_pool = text_cands + videos  # videos double as degen draft material
+    print(
+        f"[radar] text_cands={len(text_cands)} videos={len(videos)} "
+        f"draft_pool={len(draft_pool)}",
+        flush=True,
+    )
 
     examples: list[str] = []
     own = (cfg.sources.get("youtube", {}) or {}).get("own_channel")
@@ -63,19 +68,19 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
 
     drafts: list[dict] = []
     fallback = None
-    if candidates:
+    if draft_pool:
         try:
             llm = LLM(
                 require_env("GROQ_API_KEY"),
                 cfg.raw.get("model", "llama-3.3-70b-versatile"),
             )
-            selected = llm.rank(candidates, cfg.drafts_per_day)
+            selected = llm.rank(draft_pool, cfg.drafts_per_day)
             for item, _reason in selected:
                 drafts.append(llm.draft(item, examples=examples))
         except Exception as e:  # noqa: BLE001 - LLM failure -> raw fallback
             print(f"[radar] LLM error: {e!r}", flush=True)
             errors.append(f"LLM недоступен ({type(e).__name__})")
-            fallback = candidates[: cfg.drafts_per_day]
+            fallback = draft_pool[: cfg.drafts_per_day]
 
     print(f"[radar] drafts={len(drafts)} fallback={bool(fallback)}", flush=True)
     messages = format_digest(
@@ -92,7 +97,7 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
         token=require_env("TELEGRAM_BOT_TOKEN"),
         chat_id=require_env("TELEGRAM_CHAT_ID"),
     )
-    store.mark_seen(candidates + videos)
+    store.mark_seen(text_cands + videos)
     store.close()
     return 0
 
