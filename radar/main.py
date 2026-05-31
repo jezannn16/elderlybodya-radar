@@ -37,7 +37,9 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
 
     store = Store(state_path)
     store.prune(days=int(cfg.raw.get("prune_days", 60)))
+    print(f"[radar] collected={len(collected)} errors={errors}", flush=True)
     candidates = filter_items(collected, cfg.keywords, store)
+    print(f"[radar] candidates={len(candidates)}", flush=True)
 
     drafts: list[dict] = []
     fallback = None
@@ -51,9 +53,11 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
             for item, _reason in selected:
                 drafts.append(llm.draft(item))
         except Exception as e:  # noqa: BLE001 - LLM failure -> raw fallback
+            print(f"[radar] LLM error: {e!r}", flush=True)
             errors.append(f"LLM недоступен ({type(e).__name__})")
             fallback = candidates[: cfg.drafts_per_day]
 
+    print(f"[radar] drafts={len(drafts)} fallback={bool(fallback)}", flush=True)
     messages = format_digest(date.today().isoformat(), drafts, errors, fallback)
 
     if dry_run:
