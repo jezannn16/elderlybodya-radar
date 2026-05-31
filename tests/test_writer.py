@@ -14,8 +14,13 @@ def test_rank_prompt_enumerates_candidates_and_asks_n():
     assert "JSON" in p
 
 
-def test_draft_prompt_includes_item_and_style():
-    p = build_draft_prompt(_item("Жим лёжа"), STYLE_GUIDE)
+def test_draft_prompt_includes_item_style_and_examples():
+    p = build_draft_prompt(_item("Жим лёжа"), STYLE_GUIDE, examples=["мой шортс про жим"])
     assert "Жим лёжа" in p
-    assert "https://x" in p
-    assert "Telegram" in p  # style guide text present
+    assert "degen" in p.lower()  # style guide present
+    assert "мой шортс про жим" in p  # voice examples injected
+
+
+def test_draft_prompt_without_examples_omits_section():
+    p = build_draft_prompt(_item("Присед"), STYLE_GUIDE)
+    assert "НАШЕГО канала" not in p

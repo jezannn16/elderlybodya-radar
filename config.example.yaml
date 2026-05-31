@@ -1,44 +1,45 @@
 timezone: Europe/Moscow
 run_hour: 6
 drafts_per_day: 5
+videos_per_day: 6
 language: ru
-since_days: 2
+since_days: 3
 prune_days: 60
 state_path: state/seen.sqlite
 model: llama-3.3-70b-versatile
 
 keywords:
   ru: [жим, присед, становая, гипертрофия, масса, бжу, креатин, профицит,
-       программа, периодизация, объём, техника, протеин, силовые]
+       программа, периодизация, объём, техника, протеин, силовые, сушка,
+       натти, банка, читмил, база, фарма, курс, тестостерон, эго, химик, рост, пампинг]
   en: [hypertrophy, resistance training, strength, bench press, "1rm",
-       progressive overload, muscle protein synthesis, periodization, creatine]
+       progressive overload, creatine, bulk, cut, gains, gym, pump, natty,
+       physique, bodybuilding, powerlifting, shreds, aesthetics]
 
 sources:
   pubmed:
-    enabled: true
-    retmax: 15
-    queries: ["resistance training", "muscle hypertrophy", "bench press",
-              "progressive overload", "creatine supplementation"]
+    enabled: false
+    retmax: 10
+    queries: ["creatine supplementation resistance training"]
   europepmc:
     enabled: true
-    page_size: 15
-    queries: ["resistance training hypertrophy", "powerlifting performance",
-              "protein muscle synthesis"]
+    page_size: 10
+    queries: ["creatine resistance training", "protein intake muscle hypertrophy"]
   rss:
     enabled: true
     feeds:
-      - https://www.strongerbyscience.com/feed/
       - https://barbend.com/feed/
       - https://t-nation.com/feed
-      - https://rpstrength.com/blogs/articles.atom
       - https://zozhnik.ru/feed/
   reddit:
     enabled: true
+    listing: top
     time: day
     limit: 25
-    subreddits: [powerlifting, weightroom, naturalbodybuilding, bodybuilding, Fitness]
+    subreddits: [GYM, swoletariat, nattyorjuice, powerlifting, bodybuilding,
+                 naturalbodybuilding, Fitness, weightroom]
   youtube:
     enabled: true
-    max_results: 5
-    channels: ["@JeffNippard", "@RenaissancePeriodization",
-               "@JuggernautTrainingSystems", "@SquatUniversity", "@alanthrall"]
+    own_channel: "@your_youtube_handle"
+    channels: ["@sam_sulek", "@TheTrenTwins", "@noeldeyzel_bodybuilder",
+               "@TheJoeySwoll", "@cbum", "@alex_eubank15", "@BradleyMartyn"]

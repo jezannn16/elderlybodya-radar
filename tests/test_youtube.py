@@ -1,23 +1,21 @@
-from radar.sources.youtube import parse_search
+import time
+from types import SimpleNamespace
+from radar.sources.youtube import parse_feed
 
 
-def test_parse_search_builds_items():
-    data = {
-        "items": [
-            {
-                "id": {"kind": "youtube#video", "videoId": "vid123"},
-                "snippet": {
-                    "title": "Full bench day",
-                    "description": "Programming a bench session.",
-                    "publishedAt": "2026-05-29T10:00:00Z",
-                },
-            }
-        ]
-    }
-    items = parse_search(data)
+def test_parse_feed_builds_items():
+    e = SimpleNamespace(
+        yt_videoid="vid123",
+        title="POV: leg day after 2 years natty",
+        link="https://www.youtube.com/watch?v=vid123",
+        summary="degen leg day",
+        published_parsed=time.struct_time((2026, 5, 30, 12, 0, 0, 0, 0, 0)),
+    )
+    parsed = SimpleNamespace(entries=[e])
+    items = parse_feed(parsed)
     assert len(items) == 1
     it = items[0]
     assert it.source == "youtube"
     assert it.source_id == "vid123"
     assert it.url == "https://www.youtube.com/watch?v=vid123"
-    assert "bench" in it.text.lower()
+    assert "leg day" in it.title.lower()

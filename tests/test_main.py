@@ -29,7 +29,7 @@ def test_run_collects_filters_drafts_and_sends(tmp_path, monkeypatch):
         def rank(self, candidates, n):
             return [(candidates[0], "топ")]
 
-        def draft(self, item, style_guide=None):
+        def draft(self, item, style_guide=None, examples=None):
             return {"text": f"пост про {item.title}", "alt_titles": []}
 
     monkeypatch.setattr(m, "LLM", FakeLLM)
