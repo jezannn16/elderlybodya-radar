@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -20,8 +20,8 @@ def parse_listing(data: dict, subreddit: str) -> list[Item]:
                 title=d.get("title", "").strip(),
                 url="https://www.reddit.com" + d.get("permalink", ""),
                 text=d.get("selftext", "") or "",
-                published_at=datetime.utcfromtimestamp(
-                    d.get("created_utc", 0)
+                published_at=datetime.fromtimestamp(
+                    d.get("created_utc", 0), timezone.utc
                 ),
             )
         )

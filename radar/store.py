@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
 from radar.models import Item
@@ -24,7 +24,7 @@ class Store:
         return cur.fetchone() is not None
 
     def mark_seen(self, items: Iterable[Item]) -> None:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         self.conn.executemany(
             "INSERT OR IGNORE INTO seen (key, first_seen) VALUES (?, ?)",
             [(it.key, now) for it in items],
@@ -32,7 +32,7 @@ class Store:
         self.conn.commit()
 
     def prune(self, days: int) -> None:
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         self.conn.execute("DELETE FROM seen WHERE first_seen < ?", (cutoff,))
         self.conn.commit()
 
