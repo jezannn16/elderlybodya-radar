@@ -101,9 +101,9 @@ Item = {
 ## 6. Источники v1 (конкретика; значения в config.yaml)
 
 - **PubMed (NCBI E-utilities)** + **Europe PMC** REST — бесплатно, без ключа (PubMed желателен api_key для лимита). Запросы: `resistance training`, `muscle hypertrophy`, `bench press`, `progressive overload`, `muscle protein synthesis`, `creatine`, `periodization`. Фильтр по дате (последние N дней).
-- **RSS** (feedparser) — ленты силовых блогов/конкурентов. Список URL — заполняет владелец.
+- **RSS** (feedparser) — стартовый набор (правится в config): Stronger By Science, BarBend, T-Nation, Renaissance Periodization, Zozhnik (RU). Силовые / наука / новости индустрии.
 - **Reddit** (бесплатный API, OAuth script-app) — сабреддиты: `powerlifting`, `weightroom`, `naturalbodybuilding`, `bodybuilding`, `Fitness`. Листинг top/day, лимит ~25.
-- **YouTube Data API v3** (бесплатная квота, ключ Google Cloud) — каналы тренеров (id заполняет владелец), новые видео: заголовок + описание.
+- **YouTube Data API v3** (бесплатная квота, ключ Google Cloud) — стартовые каналы (handle→channelId резолвится в адаптере): Jeff Nippard, Renaissance Periodization, Juggernaut Training Systems, Squat University, Alan Thrall; RU — Станислав Линдовер, CMT Научный подход, Денис Борисов. Новые видео: заголовок + описание.
 
 **Keywords (config, RU+EN):** жим лёжа, присед, становая, гипертрофия, масса, БЖУ, креатин, профицит, программа, периодизация, объём, RPE, техника, протеин; hypertrophy, resistance training, strength, bench press, 1RM, progressive overload, muscle protein synthesis, periodization, volume.
 
@@ -143,12 +143,14 @@ pytest, TDD. Юнит: каждый адаптер парсит фикстуру
 - TikTok-скрейпинг (нет API, хрупко).
 - Чтение чужих Telegram-каналов/чатов (нужен user-client Telethon, риск бана).
 - Автопостинг в канал.
+- Запуск командой из Telegram (нужен always-on webhook; в v1 запуск по запросу = `workflow_dispatch`).
 - Prometheus/Grafana, RabbitMQ, Kubernetes, multi-agent-оркестратор (оверкилл для дневного крона).
 
-## 14. Открытые вопросы (к ревью)
+## 14. Решения по открытым вопросам (закрыто на ревью)
 
-1. **Подтвердить домен:** силовые/лифтинг (не пожилые) — верно?
-2. **Голос:** доэкспорт `messages.html` или 3-5 постов текстом (иначе writer на style-guide, шлифуем после 1-го прогона).
-3. **Источники-конкретика:** какие RSS-ленты и какие YouTube-каналы (id) добавить в config.
-4. **Репо:** имя public-репо на GitHub + есть ли `gh`/аккаунт.
-5. **Время/объём:** 06:00 МСК, 5 черновиков/день — ок?
+1. **Домен** — подтверждён: силовые / пауэрлифтинг / бодибилдинг.
+2. **Голос** — старт на style-guide (раздел 2); шлифовка после 1-го прогона / доэкспорта реальных постов.
+3. **Источники** — стартовые RSS/YouTube выбраны (раздел 6), правятся в config.
+4. **Репо** — public-репо на GitHub, аккаунт владельца, `gh` настроен; репо создаётся на этапе деплоя (с подтверждением перед push).
+5. **Время/объём** — 06:00 МСК, 5 черновиков/день.
+6. **Запуск по запросу** — помимо cron, ручной триггер `workflow_dispatch` (кнопка «Run workflow» в GitHub-приложении / `gh workflow run`). Запуск командой из Telegram — v2 (нужен постоянный webhook-endpoint, ломает $0/serverless-модель).
