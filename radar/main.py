@@ -5,7 +5,7 @@ from datetime import date
 from radar.config import load_config, require_env
 from radar.store import Store
 from radar.filter import filter_items
-from radar.llm import Gemini
+from radar.llm import LLM
 from radar.digest import format_digest
 from radar.delivery import send_messages
 from radar.sources import pubmed, europepmc, rss, reddit, youtube
@@ -43,13 +43,13 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
     fallback = None
     if candidates:
         try:
-            gem = Gemini(
-                require_env("GEMINI_API_KEY"),
-                cfg.raw.get("model", "gemini-2.0-flash"),
+            llm = LLM(
+                require_env("GROQ_API_KEY"),
+                cfg.raw.get("model", "llama-3.3-70b-versatile"),
             )
-            selected = gem.rank(candidates, cfg.drafts_per_day)
+            selected = llm.rank(candidates, cfg.drafts_per_day)
             for item, _reason in selected:
-                drafts.append(gem.draft(item))
+                drafts.append(llm.draft(item))
         except Exception as e:  # noqa: BLE001 - LLM failure -> raw fallback
             errors.append(f"LLM недоступен ({type(e).__name__})")
             fallback = candidates[: cfg.drafts_per_day]

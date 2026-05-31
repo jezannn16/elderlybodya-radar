@@ -5,7 +5,7 @@ language: ru
 since_days: 2
 prune_days: 60
 state_path: state/seen.sqlite
-model: gemini-2.0-flash
+model: llama-3.3-70b-versatile
 
 keywords:
   ru: [жим, присед, становая, гипертрофия, масса, бжу, креатин, профицит,

@@ -32,13 +32,13 @@ def test_run_collects_filters_drafts_and_sends(tmp_path, monkeypatch):
         def draft(self, item, style_guide=None):
             return {"text": f"пост про {item.title}", "alt_titles": []}
 
-    monkeypatch.setattr(m, "Gemini", FakeLLM)
+    monkeypatch.setattr(m, "LLM", FakeLLM)
 
     sent = {}
     monkeypatch.setattr(
         m, "send_messages", lambda messages, token, chat_id, **k: sent.update(msgs=messages)
     )
-    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("GROQ_API_KEY", "k")
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "t")
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
 

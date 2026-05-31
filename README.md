@@ -2,8 +2,9 @@
 
 Daily $0 content radar for the Telegram channel **@elderlybodya** (strength /
 powerlifting / bodybuilding). Pulls fresh signals from PubMed, Europe PMC, RSS,
-Reddit and YouTube, ranks them with Gemini Flash, and DMs ready-to-edit post
-drafts to the owner via a Telegram bot. The owner edits and publishes manually.
+Reddit and YouTube, ranks them with an LLM (Groq / Llama 3.3), and DMs
+ready-to-edit post drafts to the owner via a Telegram bot. The owner edits and
+publishes manually.
 
 ## Run locally (dry run, no sending)
 
@@ -21,7 +22,7 @@ python -m venv .venv
 
 ## Secrets (env vars / GitHub Actions Secrets)
 
-- `GEMINI_API_KEY`
+- `GROQ_API_KEY`
 - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
 - `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`
 - `YOUTUBE_API_KEY`
