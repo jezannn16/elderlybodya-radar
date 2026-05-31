@@ -1,0 +1,44 @@
+timezone: Europe/Moscow
+run_hour: 6
+drafts_per_day: 5
+language: ru
+since_days: 2
+prune_days: 60
+state_path: state/seen.sqlite
+model: gemini-2.0-flash
+
+keywords:
+  ru: [жим, присед, становая, гипертрофия, масса, бжу, креатин, профицит,
+       программа, периодизация, объём, техника, протеин, силовые]
+  en: [hypertrophy, resistance training, strength, bench press, "1rm",
+       progressive overload, muscle protein synthesis, periodization, creatine]
+
+sources:
+  pubmed:
+    enabled: true
+    retmax: 15
+    queries: ["resistance training", "muscle hypertrophy", "bench press",
+              "progressive overload", "creatine supplementation"]
+  europepmc:
+    enabled: true
+    page_size: 15
+    queries: ["resistance training hypertrophy", "powerlifting performance",
+              "protein muscle synthesis"]
+  rss:
+    enabled: true
+    feeds:
+      - https://www.strongerbyscience.com/feed/
+      - https://barbend.com/feed/
+      - https://t-nation.com/feed
+      - https://rpstrength.com/blogs/articles.atom
+      - https://zozhnik.ru/feed/
+  reddit:
+    enabled: true
+    time: day
+    limit: 25
+    subreddits: [powerlifting, weightroom, naturalbodybuilding, bodybuilding, Fitness]
+  youtube:
+    enabled: true
+    max_results: 5
+    channels: ["@JeffNippard", "@RenaissancePeriodization",
+               "@JuggernautTrainingSystems", "@SquatUniversity", "@alanthrall"]
