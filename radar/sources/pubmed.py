@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -15,7 +15,7 @@ def _parse_date(pubdate: str) -> datetime:
             return datetime.strptime(pubdate.strip(), fmt)
         except ValueError:
             continue
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def parse_summary(data: dict) -> list[Item]:

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from radar.models import Item
 from radar.store import Store
 
@@ -23,7 +23,7 @@ def test_prune_removes_old(tmp_path):
     # backdate the row
     s.conn.execute(
         "UPDATE seen SET first_seen = ? WHERE key = ?",
-        ((datetime.utcnow() - timedelta(days=90)).isoformat(), it.key),
+        ((datetime.now(timezone.utc) - timedelta(days=90)).isoformat(), it.key),
     )
     s.conn.commit()
     s.prune(days=60)

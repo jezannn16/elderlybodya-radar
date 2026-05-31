@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from time import mktime
 
 import feedparser
@@ -12,7 +12,7 @@ def _date(entry) -> datetime:
     )
     if tp:
         return datetime.fromtimestamp(mktime(tp))
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def parse_feed(parsed, feed_url: str) -> list[Item]:

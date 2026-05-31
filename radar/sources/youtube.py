@@ -12,7 +12,7 @@ def _date(s: str) -> datetime:
     try:
         return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
 
 def parse_search(data: dict) -> list[Item]:

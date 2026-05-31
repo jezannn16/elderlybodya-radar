@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -11,7 +11,7 @@ def _parse_date(s: str) -> datetime:
     try:
         return datetime.strptime(s, "%Y-%m-%d")
     except (ValueError, TypeError):
-        return datetime.utcnow()
+        return datetime.now(timezone.utc)
 
 
 def parse(data: dict) -> list[Item]:
