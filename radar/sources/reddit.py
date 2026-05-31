@@ -1,12 +1,11 @@
-import os
 from datetime import datetime, timezone
 
 import requests
 
 from radar.models import Item
 
-TOKEN_URL = "https://www.reddit.com/api/v1/access_token"
-API = "https://oauth.reddit.com"
+API = "https://www.reddit.com"
+_UA = {"User-Agent": "elderlybodya-radar/1.0 (by /u/elderlybodya)"}
 
 
 def parse_listing(data: dict, subreddit: str) -> list[Item]:
@@ -28,30 +27,14 @@ def parse_listing(data: dict, subreddit: str) -> list[Item]:
     return items
 
 
-def _token(user_agent: str) -> str:
-    auth = requests.auth.HTTPBasicAuth(
-        os.environ["REDDIT_CLIENT_ID"], os.environ["REDDIT_CLIENT_SECRET"]
-    )
-    resp = requests.post(
-        TOKEN_URL,
-        auth=auth,
-        data={"grant_type": "client_credentials"},
-        headers={"User-Agent": user_agent},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    return resp.json()["access_token"]
-
-
 def fetch(cfg: dict, since_days: int) -> list[Item]:
-    ua = os.environ.get("REDDIT_USER_AGENT", "elderlybodya-radar/1.0")
-    token = _token(ua)
-    headers = {"Authorization": f"bearer {token}", "User-Agent": ua}
+    """Keyless: hit Reddit's public .json endpoints with a descriptive User-Agent."""
+    listing = cfg.get("listing", "top")
     items: list[Item] = []
     for sub in cfg.get("subreddits", []):
         resp = requests.get(
-            f"{API}/r/{sub}/top",
-            headers=headers,
+            f"{API}/r/{sub}/{listing}.json",
+            headers=_UA,
             params={"t": cfg.get("time", "day"), "limit": cfg.get("limit", 25)},
             timeout=30,
         )

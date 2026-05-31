@@ -1,73 +1,81 @@
-import os
-from datetime import datetime, timedelta, timezone
+import re
+from datetime import datetime, timezone
+from time import mktime
 
+import feedparser
 import requests
 
 from radar.models import Item
 
-API = "https://www.googleapis.com/youtube/v3"
+FEED = "https://www.youtube.com/feeds/videos.xml?channel_id={cid}"
+_UA = {"User-Agent": "Mozilla/5.0 (compatible; elderlybodya-radar/1.0)"}
+_CID_RE = re.compile(r'"(?:channelId|externalId)":"(UC[0-9A-Za-z_-]{22})"')
 
 
-def _date(s: str) -> datetime:
+def _date(entry) -> datetime:
+    tp = getattr(entry, "published_parsed", None) or getattr(
+        entry, "updated_parsed", None
+    )
+    if tp:
+        return datetime.fromtimestamp(mktime(tp), timezone.utc)
+    return datetime.now(timezone.utc)
+
+
+def resolve_channel_id(handle: str) -> str | None:
+    """Resolve a @handle / URL / UC-id to a channelId by scraping the page (keyless)."""
+    h = handle.strip()
+    if h.startswith("UC") and len(h) == 24:
+        return h
+    if h.startswith("http"):
+        url = h
+    elif h.startswith("@"):
+        url = f"https://www.youtube.com/{h}"
+    else:
+        url = f"https://www.youtube.com/@{h}"
     try:
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
-    except (ValueError, TypeError):
-        return datetime.now(timezone.utc)
+        html = requests.get(url, headers=_UA, timeout=30).text
+    except Exception:  # noqa: BLE001
+        return None
+    m = _CID_RE.search(html)
+    return m.group(1) if m else None
 
 
-def parse_search(data: dict) -> list[Item]:
+def parse_feed(parsed) -> list[Item]:
     items: list[Item] = []
-    for row in data.get("items", []):
-        vid = row.get("id", {}).get("videoId")
-        if not vid:
-            continue
-        sn = row.get("snippet", {})
+    for e in getattr(parsed, "entries", []):
+        vid = getattr(e, "yt_videoid", None) or getattr(e, "id", "")
         items.append(
             Item(
                 source="youtube",
                 source_id=vid,
-                title=sn.get("title", "").strip(),
-                url=f"https://www.youtube.com/watch?v={vid}",
-                text=sn.get("description", "") or "",
-                published_at=_date(sn.get("publishedAt", "")),
+                title=getattr(e, "title", "").strip(),
+                url=getattr(e, "link", ""),
+                text=getattr(e, "summary", "") or "",
+                published_at=_date(e),
             )
         )
     return items
 
 
-def _resolve_channel_id(handle: str, api_key: str) -> str | None:
-    h = handle.lstrip("@")
-    resp = requests.get(
-        f"{API}/channels",
-        params={"part": "id", "forHandle": h, "key": api_key},
-        timeout=30,
-    )
-    rows = resp.json().get("items", [])
-    return rows[0]["id"] if rows else None
-
-
 def fetch(cfg: dict, since_days: int) -> list[Item]:
-    api_key = os.environ["YOUTUBE_API_KEY"]
-    after = (
-        datetime.now(timezone.utc) - timedelta(days=since_days)
-    ).strftime("%Y-%m-%dT%H:%M:%SZ")
     items: list[Item] = []
     for handle in cfg.get("channels", []):
-        cid = _resolve_channel_id(handle, api_key)
+        cid = resolve_channel_id(handle)
         if not cid:
             continue
-        resp = requests.get(
-            f"{API}/search",
-            params={
-                "part": "snippet",
-                "channelId": cid,
-                "order": "date",
-                "type": "video",
-                "publishedAfter": after,
-                "maxResults": cfg.get("max_results", 5),
-                "key": api_key,
-            },
-            timeout=30,
-        )
-        items.extend(parse_search(resp.json()))
+        parsed = feedparser.parse(FEED.format(cid=cid))
+        items.extend(parse_feed(parsed))
     return items
+
+
+def channel_titles(handle: str, limit: int = 12) -> list[str]:
+    """Recent video titles of a channel — used as voice examples for the writer."""
+    cid = resolve_channel_id(handle)
+    if not cid:
+        return []
+    parsed = feedparser.parse(FEED.format(cid=cid))
+    return [
+        getattr(e, "title", "").strip()
+        for e in getattr(parsed, "entries", [])[:limit]
+        if getattr(e, "title", "").strip()
+    ]

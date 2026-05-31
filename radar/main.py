@@ -4,7 +4,7 @@ from datetime import date
 
 from radar.config import load_config, require_env
 from radar.store import Store
-from radar.filter import filter_items
+from radar.filter import filter_items, dedup_unseen
 from radar.llm import LLM
 from radar.digest import format_digest
 from radar.delivery import send_messages
@@ -37,9 +37,29 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
 
     store = Store(state_path)
     store.prune(days=int(cfg.raw.get("prune_days", 60)))
-    print(f"[radar] collected={len(collected)} errors={errors}", flush=True)
-    candidates = filter_items(collected, cfg.keywords, store)
-    print(f"[radar] candidates={len(candidates)}", flush=True)
+
+    video_items = [it for it in collected if it.source == "youtube"]
+    text_items = [it for it in collected if it.source != "youtube"]
+    print(
+        f"[radar] collected={len(collected)} text={len(text_items)} "
+        f"video={len(video_items)} errors={errors}",
+        flush=True,
+    )
+
+    candidates = filter_items(text_items, cfg.keywords, store)
+    videos = dedup_unseen(video_items, store)
+    videos.sort(key=lambda it: it.published_at, reverse=True)
+    videos = videos[: int(cfg.raw.get("videos_per_day", 6))]
+    print(f"[radar] candidates={len(candidates)} videos={len(videos)}", flush=True)
+
+    examples: list[str] = []
+    own = (cfg.sources.get("youtube", {}) or {}).get("own_channel")
+    if own:
+        try:
+            examples = youtube.channel_titles(own, limit=12)
+        except Exception as e:  # noqa: BLE001
+            print(f"[radar] own-channel error: {e!r}", flush=True)
+    print(f"[radar] voice_examples={len(examples)}", flush=True)
 
     drafts: list[dict] = []
     fallback = None
@@ -51,14 +71,16 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
             )
             selected = llm.rank(candidates, cfg.drafts_per_day)
             for item, _reason in selected:
-                drafts.append(llm.draft(item))
+                drafts.append(llm.draft(item, examples=examples))
         except Exception as e:  # noqa: BLE001 - LLM failure -> raw fallback
             print(f"[radar] LLM error: {e!r}", flush=True)
             errors.append(f"LLM недоступен ({type(e).__name__})")
             fallback = candidates[: cfg.drafts_per_day]
 
     print(f"[radar] drafts={len(drafts)} fallback={bool(fallback)}", flush=True)
-    messages = format_digest(date.today().isoformat(), drafts, errors, fallback)
+    messages = format_digest(
+        date.today().isoformat(), drafts, errors, fallback, videos
+    )
 
     if dry_run:
         print("\n\n---\n\n".join(messages))
@@ -70,7 +92,7 @@ def run(config_path: str = "config.yaml", dry_run: bool = False) -> int:
         token=require_env("TELEGRAM_BOT_TOKEN"),
         chat_id=require_env("TELEGRAM_CHAT_ID"),
     )
-    store.mark_seen(candidates)
+    store.mark_seen(candidates + videos)
     store.close()
     return 0
 

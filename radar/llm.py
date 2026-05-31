@@ -43,7 +43,7 @@ class LLM:
                     json={
                         "model": self.model,
                         "messages": [{"role": "user", "content": prompt}],
-                        "temperature": 0.7,
+                        "temperature": 0.8,
                     },
                     timeout=60,
                 )
@@ -64,6 +64,7 @@ class LLM:
                 out.append((candidates[idx], p.get("reason", "")))
         return out
 
-    def draft(self, item: Item, style_guide: str = STYLE_GUIDE) -> dict:
-        raw = self._generate(build_draft_prompt(item, style_guide))
+    def draft(self, item: Item, style_guide: str = STYLE_GUIDE,
+              examples: list[str] | None = None) -> dict:
+        raw = self._generate(build_draft_prompt(item, style_guide, examples))
         return json.loads(_strip_fences(raw))

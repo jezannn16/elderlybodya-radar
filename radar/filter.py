@@ -19,3 +19,21 @@ def filter_items(items: list[Item], keywords: list[str], store) -> list[Item]:
         seen_in_batch.add(it.key)
         out.append(it)
     return out
+
+
+def dedup_unseen(items: list[Item], store) -> list[Item]:
+    """Drop already-seen and intra-batch duplicates. No keyword filter.
+
+    Used for curated sources (e.g. YouTube channels) where every item is
+    relevant by virtue of the channel being hand-picked.
+    """
+    out: list[Item] = []
+    seen_in_batch: set[str] = set()
+    for it in items:
+        if it.key in seen_in_batch:
+            continue
+        if store.is_seen(it):
+            continue
+        seen_in_batch.add(it.key)
+        out.append(it)
+    return out

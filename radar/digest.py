@@ -12,6 +12,7 @@ def format_digest(
     drafts: list[dict],
     errors: list[str],
     fallback: list[Item] | None = None,
+    videos: list[Item] | None = None,
 ) -> list[str]:
     messages: list[str] = []
 
@@ -20,6 +21,8 @@ def format_digest(
         header.append(f"Черновиков нет (LLM недоступен). Сырьё: {len(fallback)}")
     else:
         header.append(f"Черновиков: {len(drafts)}")
+    if videos:
+        header.append(f"Видео-референсов: {len(videos)}")
     if errors:
         header.append("⚠ " + "; ".join(errors))
     messages.extend(split_message("\n".join(header)))
@@ -27,13 +30,20 @@ def format_digest(
     if fallback:
         lines = [f"• {it.title}\n{it.url}" for it in fallback]
         messages.extend(split_message("\n\n".join(lines)))
-        return messages
+    else:
+        for i, d in enumerate(drafts, 1):
+            block = f"✏️ Черновик {i}\n\n{d.get('text', '')}"
+            alts = d.get("alt_titles") or []
+            if alts:
+                block += "\n\nВарианты заголовка:\n" + "\n".join(
+                    f"— {a}" for a in alts
+                )
+            messages.extend(split_message(block))
 
-    for i, d in enumerate(drafts, 1):
-        block = f"✏️ Черновик {i}\n\n{d.get('text', '')}"
-        alts = d.get("alt_titles") or []
-        if alts:
-            block += "\n\nВарианты заголовка:\n" + "\n".join(f"— {a}" for a in alts)
-        messages.extend(split_message(block))
+    if videos:
+        vlines = [f"• {it.title}\n{it.url}" for it in videos]
+        messages.extend(
+            split_message("🎬 Видео-референс (сними похожее):\n\n" + "\n\n".join(vlines))
+        )
 
     return messages
